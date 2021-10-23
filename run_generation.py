@@ -28,7 +28,7 @@ from protoqa_evaluator.evaluation import *
 from functools import partial
 from pathlib import Path
 import numpy as np
-
+from torch.cuda.amp import autocast
 
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
@@ -102,23 +102,24 @@ def sample_sequence(model, length, context, num_samples=1, temperature=1, top_k=
     context = context.unsqueeze(0).repeat(num_samples, 1)
     generated = context
     with torch.no_grad():
-        for _ in trange(length):
+        for _ in range(length):
 
             inputs = {'input_ids': generated}
-            outputs = model(**inputs)  # Note: we could also use 'past' with GPT-2/Transfo-XL/XLNet/CTRL (cached hidden-states)
-            next_token_logits = outputs[0][:, -1, :] / (temperature if temperature > 0 else 1.)
+            with autocast():
+                outputs = model(**inputs)  # Note: we could also use 'past' with GPT-2/Transfo-XL/XLNet/CTRL (cached hidden-states)
+                next_token_logits = outputs[0][:, -1, :] / (temperature if temperature > 0 else 1.)
 
-            # repetition penalty from CTRL (https://arxiv.org/abs/1909.05858)
-            for i in range(num_samples):
-                for _ in set(generated[i].tolist()):
-                    next_token_logits[i, _] /= repetition_penalty
+                # repetition penalty from CTRL (https://arxiv.org/abs/1909.05858)
+                for i in range(num_samples):
+                    for _ in set(generated[i].tolist()):
+                        next_token_logits[i, _] /= repetition_penalty
 
-            filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=top_k, top_p=top_p)
-            if temperature == 0: # greedy sampling:
-                next_token = torch.argmax(filtered_logits, dim=-1).unsqueeze(-1)
-            else:
-                next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
-            generated = torch.cat((generated, next_token), dim=1)
+                filtered_logits = top_k_top_p_filtering(next_token_logits, top_k=top_k, top_p=top_p)
+                if temperature == 0: # greedy sampling:
+                    next_token = torch.argmax(filtered_logits, dim=-1).unsqueeze(-1)
+                else:
+                    next_token = torch.multinomial(F.softmax(filtered_logits, dim=-1), num_samples=1)
+                generated = torch.cat((generated, next_token), dim=1)
     return generated
 
 def transform_question(question):
@@ -271,9 +272,9 @@ def main():
     set_seed(args)
     args.model_type = args.model_type.lower()
     model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    tokenizer = tokenizer_class.from_pretrained(args.model_name_or_path, cache_dir = './pre_trained_model')
+    tokenizer = tokenizer_class.from_pretrained("gpt2", cache_dir = './pre_trained_model')
     model = model_class.from_pretrained(args.model_name_or_path, cache_dir = './pre_trained_model')
-    model.to(args.device)
+    model = model.to(args.device)
     model.eval()
 
     en_stopwords = set(stopwords.words('english'))
@@ -292,8 +293,8 @@ def main():
     result = []
     i=0
     num = len(questions)
-    for single_question_idx in range(len(questions)):
-        print(i,'th example')
+    for single_question_idx in trange(len(questions)):
+        # print(i,'th example')
         raw_text = questions[single_question_idx]
         i+=1
         context_tokens = tokenizer.encode(raw_text, add_special_tokens=False)
