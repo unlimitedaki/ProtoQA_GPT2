@@ -9,7 +9,7 @@ import argparse
 import logging
 from tqdm import trange
 from collections import Counter
-
+import os, sys
 import torch
 import torch.nn.functional as F
 import numpy as np
@@ -338,8 +338,9 @@ def main():
         sampled_answers[q] = counted_value
         ranked_list = [pair[0] for pair in counted_value.most_common(10)]
         ranked_predicted_dev[q] = ranked_list
-
-
+    
+    if not os.path.exists(args.output):
+        os.makedirs(args.output)
     with open(args.output+'ranked_list.jsonl', 'w') as f:
         for key in ranked_predicted_dev:
             json.dump({key:ranked_predicted_dev[key]}, f)
