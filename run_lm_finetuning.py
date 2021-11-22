@@ -184,8 +184,9 @@ def mask_tokens(inputs, tokenizer, args):
 
 def train(args, train_dataset, model, tokenizer):
     """ Train the model """
+    tensorboard_path = os.path.join(args.output_dir, "/logs")
     if args.local_rank in [-1, 0]:
-        tb_writer = SummaryWriter()
+        tb_writer = SummaryWriter(tensorboard_path)
 
     args.train_batch_size = args.per_gpu_train_batch_size * max(1, args.n_gpu)
     train_sampler = RandomSampler(train_dataset) if args.local_rank == -1 else DistributedSampler(train_dataset)
@@ -285,7 +286,10 @@ def train(args, train_dataset, model, tokenizer):
                         for key, value in results.items():
                             tb_writer.add_scalar('eval_{}'.format(key), value, global_step)
                     tb_writer.add_scalar('lr', scheduler.get_lr()[0], global_step)
-                    tb_writer.add_scalar('loss', (tr_loss - logging_loss)/args.logging_steps, global_step)
+                    avg_loss = (tr_loss - logging_loss)/args.logging_steps
+                    tb_writer.add_scalar('loss', avg_loss, global_step)
+                    logger.info("avg_loss = %f", avg_loss)
+
                     logging_loss = tr_loss
 
                 if args.local_rank in [-1, 0] and args.save_steps > 0 and global_step % args.save_steps == 0:
