@@ -14,9 +14,10 @@ import torch
 import torch.nn.functional as F
 import numpy as np
 
-from transformers import GPT2Config, OpenAIGPTConfig, XLNetConfig, TransfoXLConfig, XLMConfig, CTRLConfig
+from transformers import GPT2Config # , OpenAIGPTConfig, XLNetConfig, TransfoXLConfig, XLMConfig, CTRLConfig
 
-from transformers import GPT2LMHeadModel, GPT2Tokenizer
+from transformers import GPT2Tokenizer
+from run_lm_finetuning import GPT2LMHeadModel
 
 import json
 import collections
