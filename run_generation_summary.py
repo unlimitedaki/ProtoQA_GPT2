@@ -318,22 +318,26 @@ def main():
         out = out[:, len(context_tokens):].tolist()
         q_idx = qidx[single_question_idx].split("+")[0] # return to origin idx
         for o in out:
-            text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
-            text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
-            text = text.strip()
-            if text.endswith('.'):
-                text = text[:-1]
-            # print(text)
-            nostop_text_list = [tok for tok in text.split(' ') if tok not in en_stopwords]
-            nostop_text = " ".join(nostop_text_list)
+            try:
+                text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
+                text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
+                text = text.strip()
+                if text.endswith('.'):
+                    text = text[:-1]
+                # print(text)
+                nostop_text_list = [tok for tok in text.split(' ') if tok not in en_stopwords]
+                nostop_text = " ".join(nostop_text_list)
             # print(nostop_text)
             
             # if qidx[single_question_idx] not in prediced_dev:
             #     prediced_dev[q_idx] = [nostop_text]
             # else:
-            if not nostop_text=="":
-                prediced_dev[q_idx].append(nostop_text)
-            result.append((raw_text, nostop_text))
+                if not nostop_text=="":
+                    prediced_dev[q_idx].append(nostop_text)
+                result.append((raw_text, nostop_text))
+            except Exception as ex:
+                print("the output \'{}\' throws a {} ".format(o, ex))
+                continue
         # pdb.set_trace()
 
 
