@@ -316,19 +316,25 @@ def main():
         )
         out = out[:, len(context_tokens):].tolist()
         for o in out:
-            text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
-            text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
-            text = text.strip()
-            if text.endswith('.'):
-                text = text[:-1]
-            # print(text)
-            nostop_text_list = [tok for tok in text.split(' ') if tok not in en_stopwords]
-            nostop_text = " ".join(nostop_text_list)
-            # print(nostop_text)
-            if qidx[single_question_idx] not in prediced_dev:
-                prediced_dev[qidx[single_question_idx]] = [nostop_text]
-            else:
-                prediced_dev[qidx[single_question_idx]].append(nostop_text)
+            try:
+                text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
+                text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
+                text = text.strip()
+                if text.endswith('.'):
+                    text = text[:-1]
+                # print(text)
+                nostop_text_list = [tok for tok in text.split(' ') if tok not in en_stopwords]
+                nostop_text = " ".join(nostop_text_list)
+                # print(nostop_text)
+                if qidx[single_question_idx] not in prediced_dev:
+                    prediced_dev[qidx[single_question_idx]] = [nostop_text]
+                else:
+                    prediced_dev[qidx[single_question_idx]].append(nostop_text)
+            except Exception as ex:
+                logger.info("Exception raised : {}".format(str(ex)))
+                logger.info("on output: {}".format(str(o)))
+                continue
+                
             result.append((raw_text, nostop_text))
 
 
