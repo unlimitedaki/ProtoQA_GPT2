@@ -337,8 +337,8 @@ def main():
                 logger.info("on output: {}".format(str(o)))
                 continue
                 
-            result.append((raw_text, nostop_text))
-        break
+                result.append((raw_text, nostop_text))
+        # break
 
     # pdb.set_trace()
     ranked_predicted_dev = collections.defaultdict(list)
@@ -353,7 +353,7 @@ def main():
         os.makedirs(args.output)
 
     ranked_list_path = os.path.join(args.output, "ranked_list.jsonl")
-    all_prediction_path = os.path.join(arhs.output, "all_prediction.jsonl")
+    all_prediction_path = os.path.join(args.output, "all_prediction.jsonl")
     with open(ranked_list_path, 'w') as f:
         for key in ranked_predicted_dev:
             json.dump({key:ranked_predicted_dev[key]}, f)
