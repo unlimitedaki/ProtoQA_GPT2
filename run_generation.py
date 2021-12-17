@@ -30,7 +30,7 @@ from functools import partial
 from pathlib import Path
 import numpy as np
 from torch.cuda.amp import autocast
-
+import pdb
 
 logging.basicConfig(format = '%(asctime)s - %(levelname)s - %(name)s -   %(message)s',
                     datefmt = '%m/%d/%Y %H:%M:%S',
@@ -273,8 +273,8 @@ def main():
     set_seed(args)
     args.model_type = args.model_type.lower()
     model_class, tokenizer_class = MODEL_CLASSES[args.model_type]
-    tokenizer = tokenizer_class.from_pretrained("gpt2", cache_dir = './pre_trained_model')
-    model = model_class.from_pretrained(args.model_name_or_path, cache_dir = './pre_trained_model')
+    tokenizer = tokenizer_class.from_pretrained("gpt2")
+    model = model_class.from_pretrained(args.model_name_or_path)
     model = model.to(args.device)
     model.eval()
 
@@ -315,9 +315,11 @@ def main():
             device=args.device,
         )
         out = out[:, len(context_tokens):].tolist()
+        # pdb.set_trace()
         for o in out:
             try:
                 text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
+                # TODO: their should be a dot in the end of answer due to the additional dot in training data
                 text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
                 text = text.strip()
                 if text.endswith('.'):
@@ -336,8 +338,9 @@ def main():
                 continue
                 
             result.append((raw_text, nostop_text))
+        break
 
-
+    # pdb.set_trace()
     ranked_predicted_dev = collections.defaultdict(list)
     sampled_answers = collections.defaultdict(list)
     for q in prediced_dev:
@@ -348,10 +351,15 @@ def main():
     
     if not os.path.exists(args.output):
         os.makedirs(args.output)
-    with open(args.output+'ranked_list.jsonl', 'w') as f:
+
+    ranked_list_path = os.path.join(args.output, "ranked_list.jsonl")
+    all_prediction_path = os.path.join(arhs.output, "all_prediction.jsonl")
+    with open(ranked_list_path, 'w') as f:
         for key in ranked_predicted_dev:
             json.dump({key:ranked_predicted_dev[key]}, f)
             f.write('\n')
+    with open(all_prediction_path, 'w') as f:
+        json.dump(all_prediction_path, f)
     with open(args.output+'sample_answers.json', 'w') as f:
         json.dump(sampled_answers, f)
 

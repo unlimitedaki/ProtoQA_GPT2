@@ -5,11 +5,13 @@ using a masked language modeling (MLM) loss.
 """
 
 from __future__ import absolute_import, division, print_function
-
+import os,sys
+if os.path.exists("external_libraries"):
+    sys.path.append('external_libraries')
 import argparse
 import glob
 import logging
-import os
+
 import pickle
 import random
 import re
