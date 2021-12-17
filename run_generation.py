@@ -237,6 +237,15 @@ def match_question(true_data_withid, true_data, pred_data):
     return true_result, pred_result
 
 
+def clean_result(answer_text):
+    all_stop = ""
+    if '/' in ans:
+        ans = ans.split("/")[0]
+    if '?' in ans:
+        ans = ans.split("?")[0]
+    if '.' in ans:
+        ans = ans.split(".")[0]
+
         # print(question)
 def main():
     parser = argparse.ArgumentParser()
@@ -320,8 +329,9 @@ def main():
             try:
                 text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
                 # TODO: their should be a dot in the end of answer due to the additional dot in training data
+                text = text.strip() # remove all 
                 text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
-                text = text.strip()
+                
                 if text.endswith('.'):
                     text = text[:-1]
                 # print(text)
