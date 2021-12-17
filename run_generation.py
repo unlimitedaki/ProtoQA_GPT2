@@ -237,14 +237,12 @@ def match_question(true_data_withid, true_data, pred_data):
     return true_result, pred_result
 
 
-def clean_result(answer_text):
-    all_stop = ""
-    if '/' in ans:
-        ans = ans.split("/")[0]
-    if '?' in ans:
-        ans = ans.split("?")[0]
-    if '.' in ans:
-        ans = ans.split(".")[0]
+def clean_result(ans):
+    all_stop = [".","?","/"]
+    for stop in all_stop:
+        if stop in ans:
+            ans = ans.split(stop)[0]
+    return ans
 
         # print(question)
 def main():
@@ -330,11 +328,13 @@ def main():
                 text = tokenizer.decode(o, clean_up_tokenization_spaces=True)
                 # TODO: their should be a dot in the end of answer due to the additional dot in training data
                 text = text.strip() # remove all 
-                text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
+                # text = text[: text.find(args.stop_token)+1 if args.stop_token else None]
                 
-                if text.endswith('.'):
-                    text = text[:-1]
+                # if text.endswith('.'):
+                #     text = text[:-1]
                 # print(text)
+                text = clean_result(text)
+                # pdb.set_trace()
                 nostop_text_list = [tok for tok in text.split(' ') if tok not in en_stopwords]
                 nostop_text = " ".join(nostop_text_list)
                 # print(nostop_text)
@@ -342,13 +342,14 @@ def main():
                     prediced_dev[qidx[single_question_idx]] = [nostop_text]
                 else:
                     prediced_dev[qidx[single_question_idx]].append(nostop_text)
+                result.append((raw_text, nostop_text))
             except Exception as ex:
                 logger.info("Exception raised : {}".format(str(ex)))
                 logger.info("on output: {}".format(str(o)))
                 continue
+                    
                 
-            result.append((raw_text, nostop_text))
-        break
+        # break
 
     # pdb.set_trace()
     ranked_predicted_dev = collections.defaultdict(list)
